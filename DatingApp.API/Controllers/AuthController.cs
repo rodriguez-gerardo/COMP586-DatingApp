@@ -18,7 +18,6 @@ namespace DatingApp.API.Controllers
     {
         private readonly IAuthRepository _repo;
         private readonly IConfiguration _config;
-
         public AuthController(IAuthRepository repo, IConfiguration config)
         {
             _config = config;
@@ -28,14 +27,11 @@ namespace DatingApp.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserForRegisterDto userForRegisterDto)
         {
-            //[ApiController] up top validates request 
-
-            //convert username to lowercase to store
             userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
 
-            if(await _repo.UserExists(userForRegisterDto.Username))
+            if (await _repo.UserExists(userForRegisterDto.Username))
                 return BadRequest("Username already exists");
-            
+
             var userToCreate = new User
             {
                 Username = userForRegisterDto.Username
@@ -44,32 +40,25 @@ namespace DatingApp.API.Controllers
             var createdUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
 
             return StatusCode(201);
-           // return CreatedAtRoute();
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserForLoginDto userForLoginDto)
         {
+            var userFromRepo = await _repo.Login(userForLoginDto.Username, userForLoginDto.Password);
 
-            //check username and password match
-            var userFromRepo = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
-
-            if(userFromRepo == null)
+            if (userFromRepo == null)
                 return Unauthorized();
-            
-            //claims for token
+
             var claims = new[]
             {
-                //user ID
                 new Claim(ClaimTypes.NameIdentifier, userFromRepo.Id.ToString()),
-                
-                //users username
                 new Claim(ClaimTypes.Name, userFromRepo.Username)
             };
-            //create security key
+
             var key = new SymmetricSecurityKey(Encoding.UTF8
                 .GetBytes(_config.GetSection("AppSettings:Token").Value));
-            //key is used as signing credentials and hashed
+
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -79,12 +68,12 @@ namespace DatingApp.API.Controllers
                 SigningCredentials = creds
             };
 
-            
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
-            return Ok(new {
+            return Ok(new
+            {
                 token = tokenHandler.WriteToken(token)
             });
         }
