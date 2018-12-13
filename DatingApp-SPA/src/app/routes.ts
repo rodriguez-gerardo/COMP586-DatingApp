@@ -10,6 +10,7 @@ import { MemberListResolver } from './_resolvers/member-list-resolver';
 import { MemberEditComponent } from './members/member-edit/member-edit.component';
 import { MemberEditResolver } from './_resolvers/member-edit-resolver';
 import { PreventUnsavedChanges } from './_guards/prevent-unsaved-changes.guard';
+import { ListsResolver } from './_resolvers/lists.resolver';
 
 // When user clicks link or enters URL, then router will attempt to match one of the following routes.
 // If nothings matches, wildcard will redirect to home
@@ -26,7 +27,7 @@ export const appRoutes: Routes = [
             {path: 'member/edit', component: MemberEditComponent,
                resolve: {user: MemberEditResolver}, canDeactivate: [PreventUnsavedChanges]},
             { path: 'messages', component: MessagesComponent},
-            { path: 'lists', component: ListsComponent},
+            { path: 'lists', component: ListsComponent, resolve: {users: ListsResolver}},
         ]
     },
 
